@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpleQR - Easy, Custom QR Codes in Seconds</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sqr: {
+                            cyan: '#00a3e0',
+                            lightcyan: '#f0f8fd',
+                            sky: '#0083cb',
+                            darkblue: '#002b49',
+                            softblue: '#cce5f5',
+                            border: '#b3d7f0'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Tahoma', 'Verdana', 'Trebuchet MS', 'Arial', 'sans-serif'],
+                        mono: ['Courier New', 'Courier', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Code Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <!-- HTML5 QR Code Scanner Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Tahoma', 'Verdana', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #e3f2fd 0%, #edf7fc 50%, #e0f2fe 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #002b49;
+        }
+
+        /* Clean Matte Button Styles */
+        .matte-btn {
+            background: linear-gradient(to bottom, #009ce4, #007bb8);
+            border: 1px solid #006093;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 43, 73, 0.12);
+            color: #ffffff;
+            font-weight: bold;
+            transition: all 0.15s ease;
+        }
+
+        .matte-btn:hover {
+            background: linear-gradient(to bottom, #00a8f5, #0087c9);
+            box-shadow: 0 4px 8px rgba(0, 140, 220, 0.2);
+        }
+
+        .matte-btn:active {
+            background: #006da5;
+            box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.2);
+            transform: translateY(1px);
+        }
+
+        .matte-btn-green {
+            background: linear-gradient(to bottom, #5cb800, #4c9900);
+            border: 1px solid #3c7300;
+        }
+
+        .matte-btn-green:hover {
+            background: linear-gradient(to bottom, #67cb00, #53a800);
+            box-shadow: 0 4px 8px rgba(92, 184, 0, 0.2);
+        }
+
+        .matte-btn-orange {
+            background: linear-gradient(to bottom, #f58220, #d96b0c);
+            border: 1px solid #b35200;
+        }
+
+        .matte-btn-orange:hover {
+            background: linear-gradient(to bottom, #ff8f2e, #e37310);
+            box-shadow: 0 4px 8px rgba(245, 130, 32, 0.2);
+        }
+
+        /* Clean Matte Panels */
+        .sqr-panel {
+            background: #ffffff;
+            border: 1px solid #b3d7f0;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 43, 73, 0.06);
+        }
+
+        .sqr-window-header {
+            background: #e6f3fa;
+            border-bottom: 1px solid #cce5f5;
+            border-top-left-radius: 9px;
+            border-top-right-radius: 9px;
+        }
+
+        /* Navigation Tab Selectors */
+        .sqr-tab {
+            background: #f0f7fc;
+            border: 1px solid #b3d7f0;
+            color: #003b66;
+            font-weight: bold;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .sqr-tab:hover {
+            background: #e1f1fa;
+        }
+
+        .sqr-tab.active {
+            background: #008ccb;
+            color: #ffffff;
+            border-color: #006f9f;
+        }
+
+        /* Inputs */
+        .sqr-input {
+            background: #ffffff;
+            border: 1px solid #9bc2dc;
+            border-radius: 6px;
+            color: #002b49;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .sqr-input:focus {
+            outline: none;
+            border-color: #008ccb;
+            box-shadow: 0 0 0 3px rgba(0, 140, 203, 0.2);
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #eef7fc; }
+        ::-webkit-scrollbar-thumb { background: #9bc2dc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #008ccb; }
+    </style>
+</head>
+<body class="p-3 sm:p-6 flex flex-col items-center justify-between min-h-screen">
+
+    <header class="w-full max-w-6xl mb-6">
+        <div class="sqr-panel p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3.5">
+                <!-- Dynamic Header Logo Canvas pointing to website URL -->
+                <div class="p-1.5 rounded-lg bg-white border border-sqr-border shadow-xs flex items-center justify-center shrink-0">
+                    <canvas id="header-logo-canvas" width="48" height="48" class="rounded"></canvas>
+                </div>
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-black tracking-wide text-sqr-darkblue">
+                        SimpleQR
+                    </h1>
+                    <p class="text-xs font-semibold text-sqr-sky">
+                        Easy, Custom QR Codes in Seconds
+                    </p>
+                </div>
+            </div>
+
+            <!-- Header Action Controls -->
+            <div class="flex items-center space-x-2">
+                <button onclick="switchMainTab('generator')" id="nav-btn-gen" class="matte-btn px-4 py-2 text-xs uppercase tracking-wider flex items-center space-x-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Generator</span>
+                </button>
+                <button onclick="switchMainTab('scanner')" id="nav-btn-scan" class="matte-btn matte-btn-green px-4 py-2 text-xs uppercase tracking-wider flex items-center space-x-1.5">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>QR Scanner</span>
+                </button>
+                <button onclick="openPrintModal()" class="matte-btn matte-btn-orange px-3 py-2 text-xs uppercase tracking-wider" title="Print Sheet">
+                    <i class="fa-solid fa-print"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full max-w-6xl flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <div id="main-tab-generator" class="lg:col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Column: Content Tabs & Customization Panels -->
+            <div class="lg:col-span-7 space-y-5">
+                
+                <!-- Consolidated Content Navigation Panel -->
+                <div class="sqr-panel overflow-hidden">
+                    <div class="sqr-window-header px-4 py-2.5 flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase text-sqr-darkblue">
+                            Content Selection
+                        </span>
+                    </div>
+
+                    <div class="p-4 bg-white space-y-4">
+                        <!-- Streamlined Content Navbar (URL, Text, Email, Phone, SMS, Wi-Fi) -->
+                        <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                            <button onclick="setPayloadType('url')" id="tab-type-url" class="sqr-tab active py-2 px-1 text-center text-xs flex flex-col items-center justify-center space-y-1">
+                                <i class="fa-solid fa-globe text-sm"></i>
+                                <span>URL</span>
+                            </button>
+                            <button onclick="setPayloadType('text')" id="tab-type-text" class="sqr-tab py-2 px-1 text-center text-xs flex flex-col items-center justify-center space-y-1">
+                                <i class="fa-solid fa-file-lines text-sm"></i>
+                                <span>Text</span>
+                            </button>
+                            <button onclick="setPayloadType('email')" id="tab-type-email" class="sqr-tab py-2 px-1 text-center text-xs flex flex-col items-center justify-center space-y-1">
+                                <i class="fa-solid fa-envelope text-sm"></i>
+                                <span>Email</span>
+                            </button>
+                            <button onclick="setPayloadType('phone')" id="tab-type-phone" class="sqr-tab py-2 px-1 text-center text-xs flex flex-col items-center justify-center space-y-1">
+                                <i class="fa-solid fa-phone text-sm"></i>
+                                <span>Phone</span>
+                            </button>
+                            <button onclick="setPayloadType('sms')" id="tab-type-sms" class="sqr-tab py-2 px-1 text-center text-xs flex flex-col items-center justify-center space-y-1">
+                                <i class="fa-solid fa-comment-sms text-sm"></i>
+                                <span>SMS</span>
+                            </button>
+                            <button onclick="setPayloadType('wifi')" id="tab-type-wifi" class="sqr-tab py-2 px-1 text-center text-xs flex flex-col items-center justify-center space-y-1">
+                                <i class="fa-solid fa-wifi text-sm"></i>
+                                <span>Wi-Fi</span>
+                            </button>
+                        </div>
+
+                        <!-- Payload Dynamic Input Forms -->
+                        <div class="pt-2">
+                            <!-- URL Form -->
+                            <div id="form-url" class="payload-form space-y-2">
+                                <label class="block text-xs font-bold text-sqr-darkblue">Web Address (URL)</label>
+                                <div class="relative">
+                                    <i class="fa-solid fa-link absolute left-3 top-3 text-sqr-sky text-sm"></i>
+                                    <input type="url" id="input-url" value="https://simpleqr.app" class="sqr-input w-full pl-9 pr-3 py-2 text-sm font-semibold" placeholder="https://example.com" oninput="updateQR()">
+                                </div>
+                            </div>
+
+                            <!-- Text Form -->
+                            <div id="form-text" class="payload-form space-y-2 hidden">
+                                <label class="block text-xs font-bold text-sqr-darkblue">Plain Text Message</label>
+                                <textarea id="input-text" rows="3" class="sqr-input w-full p-2 text-sm" placeholder="Type text content here..." oninput="updateQR()">SimpleQR - Easy, Custom QR Codes in Seconds</textarea>
+                            </div>
+
+                            <!-- Email Form -->
+                            <div id="form-email" class="payload-form space-y-3 hidden">
+                                <div>
+                                    <label class="block text-xs font-bold text-sqr-darkblue mb-1">Recipient Email</label>
+                                    <input type="email" id="email-to" value="contact@example.com" class="sqr-input w-full p-2 text-sm" oninput="updateQR()">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-sqr-darkblue mb-1">Subject</label>
+                                    <input type="text" id="email-sub" value="Inquiry" class="sqr-input w-full p-2 text-sm" oninput="updateQR()">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-sqr-darkblue mb-1">Message Body</label>
+                                    <textarea id="email-body" rows="2" class="sqr-input w-full p-2 text-sm" oninput="updateQR()">Sent using SimpleQR!</textarea>
+                                </div>
+                            </div>
+
+                            <!-- Phone Form -->
+                            <div id="form-phone" class="payload-form space-y-2 hidden">
+                                <label class="block text-xs font-bold text-sqr-darkblue">Phone Number</label>
+                                <div class="relative">
+                                    <i class="fa-solid fa-phone absolute left-3 top-3 text-sqr-sky text-sm"></i>
+                                    <input type="tel" id="input-phone" value="+18005550199" class="sqr-input w-full pl-9 pr-3 py-2 text-sm font-semibold" placeholder="+1234567890" oninput="updateQR()">
+                                </div>
+                            </div>
+
+                            <!-- SMS Form -->
+                            <div id="form-sms" class="payload-form space-y-3 hidden">
+                                <div>
+                                    <label class="block text-xs font-bold text-sqr-darkblue mb-1">Phone Number</label>
+                                    <input type="tel" id="sms-phone" value="+18005550199" class="sqr-input w-full p-2 text-sm" oninput="updateQR()">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-sqr-darkblue mb-1">SMS Message</label>
+                                    <textarea id="sms-body" rows="2" class="sqr-input w-full p-2 text-sm" oninput="updateQR()">Hello via SimpleQR!</textarea>
+                                </div>
+                            </div>
+
+                            <!-- Wi-Fi Form -->
+                            <div id="form-wifi" class="payload-form space-y-3 hidden">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-sqr-darkblue mb-1">Network Name (SSID)</label>
+                                        <input type="text" id="wifi-ssid" value="My_WiFi_Network" class="sqr-input w-full p-2 text-sm" oninput="updateQR()">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-sqr-darkblue mb-1">Password</label>
+                                        <input type="text" id="wifi-pass" value="WirelessPass123" class="sqr-input w-full p-2 text-sm" oninput="updateQR()">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-sqr-darkblue mb-1">Encryption</label>
+                                        <select id="wifi-auth" class="sqr-input w-full p-2 text-sm" onchange="updateQR()">
+                                            <option value="WPA">WPA/WPA2</option>
+                                            <option value="WEP">WEP</option>
+                                            <option value="nopass">Open</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end pb-1">
+                                        <label class="inline-flex items-center space-x-2 text-xs font-bold text-sqr-darkblue cursor-pointer">
+                                            <input type="checkbox" id="wifi-hidden" class="rounded text-sqr-sky focus:ring-sqr-sky" onchange="updateQR()">
+                                            <span>Hidden Network</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sqr-panel overflow-hidden">
+                    <div class="sqr-window-header px-4 py-2.5 flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase text-sqr-darkblue">
+                            Customize Design
+                        </span>
+                    </div>
+
+                    <div class="p-4 bg-white space-y-4">
+                        <!-- Custom Color Pickers -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-sqr-darkblue mb-1">Foreground Color</label>
+                                <div class="flex items-center space-x-2">
+                                    <input type="color" id="opt-fg-color" value="#002b49" class="w-8 h-8 p-0.5 rounded border border-sqr-sky cursor-pointer" oninput="updateQR()">
+                                    <input type="text" id="opt-fg-hex" value="#002B49" class="sqr-input w-24 p-1.5 text-xs uppercase font-mono" onchange="syncHexToPicker('fg'); updateQR();">
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="block text-xs font-bold text-sqr-darkblue">Background Color</label>
+                                    <label class="inline-flex items-center space-x-1 text-[11px] text-sqr-sky font-semibold cursor-pointer">
+                                        <input type="checkbox" id="opt-bg-transparent" class="rounded text-sqr-sky focus:ring-sqr-sky" onchange="updateQR()">
+                                        <span>Transparent</span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <input type="color" id="opt-bg-color" value="#ffffff" class="w-8 h-8 p-0.5 rounded border border-sqr-sky cursor-pointer" oninput="updateQR()">
+                                    <input type="text" id="opt-bg-hex" value="#FFFFFF" class="sqr-input w-24 p-1.5 text-xs uppercase font-mono" onchange="syncHexToPicker('bg'); updateQR();">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Module Dot & Eye Frame Selectors -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-sqr-softblue pt-3">
+                            <div>
+                                <label class="block text-xs font-bold text-sqr-darkblue mb-1">Dot Style</label>
+                                <select id="opt-dot-style" class="sqr-input w-full p-2 text-xs font-semibold" onchange="updateQR()">
+                                    <option value="square" selected>Square</option>
+                                    <option value="round">Round</option>
+                                    <option value="dots">Dots</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-sqr-darkblue mb-1">Eye Frame Style</label>
+                                <select id="opt-eye-style" class="sqr-input w-full p-2 text-xs font-semibold" onchange="updateQR()">
+                                    <option value="square" selected>Square</option>
+                                    <option value="rounded">Rounded</option>
+                                    <option value="circle">Circle</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Central Logo Overlay Controls with Sliders -->
+                        <div class="border-t border-sqr-softblue pt-3 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold text-sqr-darkblue">
+                                    Central Logo Image
+                                </label>
+                                <button id="btn-remove-logo" onclick="removeLogo()" class="hidden text-xs text-red-600 font-bold hover:underline">
+                                    <i class="fa-solid fa-trash-can mr-1"></i>Remove Logo
+                                </button>
+                            </div>
+
+                            <div class="flex items-center space-x-3">
+                                <label class="matte-btn px-4 py-2 text-xs cursor-pointer flex items-center space-x-2 shrink-0">
+                                    <i class="fa-solid fa-file-arrow-up"></i>
+                                    <span>Upload Image</span>
+                                    <input type="file" id="logo-upload" accept="image/png, image/jpeg, image/svg+xml" class="hidden" onchange="handleLogoUpload(event)">
+                                </label>
+                                
+                                <div id="logo-filename-preview" class="text-xs text-sqr-darkblue font-semibold truncate bg-sqr-lightcyan px-3 py-1.5 rounded border border-sqr-softblue flex-1 hidden">
+                                    No logo uploaded
+                                </div>
+                            </div>
+
+                            <!-- Sliders Container -->
+                            <div id="logo-settings-panel" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 bg-sqr-lightcyan p-3 rounded-lg border border-sqr-softblue">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="text-[11px] font-bold text-sqr-darkblue">Logo Size</label>
+                                        <span id="logo-size-val" class="text-[10px] font-mono text-sqr-sky font-bold">22%</span>
+                                    </div>
+                                    <input type="range" id="opt-logo-size" min="10" max="30" value="22" class="w-full h-1.5 bg-sqr-softblue rounded-lg appearance-none cursor-pointer accent-sqr-sky" oninput="document.getElementById('logo-size-val').innerText = this.value + '%'; updateQR();">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="text-[11px] font-bold text-sqr-darkblue">Padding Shape</label>
+                                    </div>
+                                    <select id="opt-logo-bg" class="sqr-input w-full p-1.5 text-xs font-semibold" onchange="updateQR()">
+                                        <option value="white-circle" selected>Circle Padding</option>
+                                        <option value="white-rect">Square Padding</option>
+                                        <option value="transparent">Transparent</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="lg:col-span-5 space-y-5">
+                
+                <div class="sqr-panel overflow-hidden sticky top-6">
+                    <div class="sqr-window-header px-4 py-2.5 flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase text-sqr-darkblue">
+                            Generate &amp; Download
+                        </span>
+                        <span class="flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span class="text-[10px] font-bold text-sqr-darkblue">Live Code</span>
+                        </span>
+                    </div>
+
+                    <div class="p-5 bg-sqr-lightcyan flex flex-col items-center justify-center space-y-4">
+                        
+                        <!-- Canvas Viewport -->
+                        <div class="p-4 rounded-lg bg-white border border-sqr-softblue shadow-xs flex items-center justify-center">
+                            <canvas id="qr-canvas" class="max-w-full h-auto rounded"></canvas>
+                        </div>
+
+                        <!-- Resolution Multiplier Selection -->
+                        <div class="w-full bg-white p-3 rounded-lg border border-sqr-softblue">
+                            <label class="block text-[11px] font-bold text-sqr-darkblue mb-2 text-center">Resolution Multiplier</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="setResolutionScale(300)" id="res-btn-300" class="sqr-tab py-1.5 text-center text-xs font-mono active">
+                                    1x (300px)
+                                </button>
+                                <button onclick="setResolutionScale(1200)" id="res-btn-1200" class="sqr-tab py-1.5 text-center text-xs font-mono">
+                                    4x (1200px)
+                                </button>
+                                <button onclick="setResolutionScale(2400)" id="res-btn-2400" class="sqr-tab py-1.5 text-center text-xs font-mono">
+                                    8x (2400px)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Download Actions -->
+                        <div class="w-full grid grid-cols-2 gap-2">
+                            <button onclick="downloadQR('png')" class="matte-btn py-2 text-xs flex items-center justify-center space-x-1.5">
+                                <i class="fa-solid fa-download"></i>
+                                <span>Download PNG</span>
+                            </button>
+                            <button onclick="downloadSVG()" class="matte-btn matte-btn-orange py-2 text-xs flex items-center justify-center space-x-1.5">
+                                <i class="fa-solid fa-code"></i>
+                                <span>Download SVG</span>
+                            </button>
+                            <button onclick="copyQRToClipboard()" class="matte-btn matte-btn-green py-2 text-xs col-span-2 flex items-center justify-center space-x-1.5">
+                                <i class="fa-solid fa-copy"></i>
+                                <span>Copy Image</span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- History Log Panel -->
+                <div class="sqr-panel overflow-hidden">
+                    <div class="sqr-window-header px-4 py-2.5 flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase text-sqr-darkblue">
+                            History Log
+                        </span>
+                        <button onclick="clearHistory()" class="text-[10px] text-red-600 font-bold hover:underline">Clear</button>
+                    </div>
+                    <div id="history-container" class="p-3 max-h-48 overflow-y-auto space-y-2 bg-white">
+                        <p class="text-xs text-center text-sqr-sky font-semibold py-3">No history logs yet.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div id="main-tab-scanner" class="lg:col-span-12 hidden">
+            <div class="sqr-panel max-w-2xl mx-auto overflow-hidden">
+                <div class="sqr-window-header px-4 py-3 flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase text-sqr-darkblue">
+                        Optical Camera Scanner
+                    </span>
+                    <button onclick="switchMainTab('generator')" class="text-xs font-bold text-sqr-sky hover:underline">
+                        &larr; Back to Generator
+                    </button>
+                </div>
+
+                <div class="p-6 bg-white space-y-6">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="startWebcamScan()" class="matte-btn px-4 py-2 text-xs flex items-center space-x-1.5">
+                            <i class="fa-solid fa-video"></i>
+                            <span>Start Camera</span>
+                        </button>
+                        <label class="matte-btn matte-btn-green px-4 py-2 text-xs cursor-pointer flex items-center space-x-1.5">
+                            <i class="fa-solid fa-file-arrow-up"></i>
+                            <span>Upload Image File</span>
+                            <input type="file" accept="image/*" class="hidden" onchange="scanImageFile(event)">
+                        </label>
+                    </div>
+
+                    <!-- Reader Container -->
+                    <div class="relative bg-slate-900 rounded-lg overflow-hidden border border-sqr-sky min-h-[240px] flex items-center justify-center">
+                        <div id="scanner-reader" class="w-full"></div>
+                        <p id="scanner-placeholder" class="text-xs text-sqr-lightcyan font-mono text-center p-4">
+                            Click 'Start Camera' or upload an image file to decode...
+                        </p>
+                    </div>
+
+                    <!-- Scan Results Display -->
+                    <div id="scanner-result-box" class="hidden p-4 rounded-lg bg-sqr-lightcyan border border-sqr-sky">
+                        <h4 class="text-xs font-bold uppercase text-sqr-darkblue mb-1">Decoded Content:</h4>
+                        <p id="scanner-result-text" class="text-sm font-mono break-all text-sqr-darkblue bg-white p-2 rounded border border-sqr-softblue mb-3"></p>
+                        <div class="flex space-x-2">
+                            <button onclick="copyScanResult()" class="matte-btn px-3 py-1 text-xs">Copy Result</button>
+                            <a id="scanner-open-url" href="#" target="_blank" class="matte-btn matte-btn-green px-3 py-1 text-xs hidden">Open Web Link</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Print Preview Modal -->
+    <div id="print-modal" class="fixed inset-0 bg-sqr-darkblue/30 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="sqr-panel max-w-md w-full overflow-hidden bg-white shadow-xl">
+            <div class="sqr-window-header px-4 py-2.5 flex items-center justify-between">
+                <span class="text-xs font-bold uppercase text-sqr-darkblue">Print Document</span>
+                <button onclick="closePrintModal()" class="text-sqr-darkblue font-bold text-sm">&times;</button>
+            </div>
+            <div id="print-preview-area" class="p-6 bg-white flex flex-col items-center justify-center text-center space-y-4">
+                <h2 class="text-lg font-bold text-sqr-darkblue">SimpleQR Document</h2>
+                <img id="print-qr-img" class="w-48 h-48 border border-gray-300 p-2 rounded" alt="Print QR">
+                <p id="print-qr-payload" class="text-xs font-mono break-all text-gray-600 px-4"></p>
+            </div>
+            <div class="p-3 bg-gray-50 flex justify-end space-x-2 border-t">
+                <button onclick="closePrintModal()" class="px-3 py-1 text-xs font-bold text-gray-600">Cancel</button>
+                <button onclick="window.print()" class="matte-btn matte-btn-green px-4 py-1.5 text-xs">Print</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="sqr-toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 matte-btn px-4 py-2 text-xs flex items-center space-x-2">
+        <i class="fa-solid fa-circle-check text-sqr-lightcyan"></i>
+        <span id="toast-text">Success</span>
+    </div>
+
+    <script>
+        // Application State
+        let currentPayloadType = 'url';
+        let overlayLogoImage = null;
+        let selectedScale = 300;
+        let qrHistory = JSON.parse(localStorage.getItem('simple_qr_history_v2') || '[]');
+        let html5QrScanner = null;
+
+        window.onload = function() {
+            renderHeaderLogo();
+            updateQR();
+            renderHistoryUI();
+        };
+
+        /* HEADER DYNAMIC QR LOGO GENERATOR */
+        function renderHeaderLogo() {
+            const canvas = document.getElementById('header-logo-canvas');
+            if (!canvas) return;
+            
+            const siteUrl = window.location.href || 'https://simpleqr.app';
+            try {
+                const qr = qrcode(0, 'M');
+                qr.addData(siteUrl);
+                qr.make();
+                
+                const count = qr.getModuleCount();
+                const ctx = canvas.getContext('2d');
+                const cellSize = canvas.width / count;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#002b49';
+
+                for (let r = 0; r < count; r++) {
+                    for (let c = 0; c < count; c++) {
+                        if (qr.isDark(r, c)) {
+                            ctx.fillRect(c * cellSize, r * cellSize, cellSize + 0.3, cellSize + 0.3);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Header QR logo generation error", e);
+            }
+        }
+
+        function switchMainTab(tab) {
+            document.getElementById('main-tab-generator').classList.toggle('hidden', tab !== 'generator');
+            document.getElementById('main-tab-scanner').classList.toggle('hidden', tab !== 'scanner');
+
+            if (tab !== 'scanner' && html5QrScanner) {
+                html5QrScanner.clear().catch(err => console.error(err));
+            }
+        }
+
+        function setPayloadType(type) {
+            currentPayloadType = type;
+            document.querySelectorAll('.sqr-tab').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-type-${type}`).classList.add('active');
+
+            document.querySelectorAll('.payload-form').forEach(f => f.classList.add('hidden'));
+            document.getElementById(`form-${type}`).classList.remove('hidden');
+
+            updateQR();
+        }
+
+        function setResolutionScale(scale) {
+            selectedScale = scale;
+            [300, 1200, 2400].forEach(s => {
+                const btn = document.getElementById(`res-btn-${s}`);
+                if (btn) btn.classList.toggle('active', s === scale);
+            });
+            updateQR();
+            showToast(`Resolution Set to ${scale}px`);
+        }
+
+        function syncHexToPicker(type) {
+            if (type === 'fg') {
+                const val = document.getElementById('opt-fg-hex').value;
+                if (/^#[0-9A-F]{6}$/i.test(val)) document.getElementById('opt-fg-color').value = val;
+            } else {
+                const val = document.getElementById('opt-bg-hex').value;
+                if (/^#[0-9A-F]{6}$/i.test(val)) document.getElementById('opt-bg-color').value = val;
+            }
+        }
+
+        /* LOGO OVERLAY LOGIC */
+        function handleLogoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const img = new Image();
+                img.onload = function() {
+                    overlayLogoImage = img;
+                    
+                    const filenameBox = document.getElementById('logo-filename-preview');
+                    filenameBox.innerText = `Logo: ${file.name}`;
+                    filenameBox.classList.remove('hidden');
+                    
+                    document.getElementById('btn-remove-logo').classList.remove('hidden');
+                    document.getElementById('logo-settings-panel').classList.remove('hidden');
+                    
+                    updateQR();
+                    showToast('Logo Uploaded Successfully');
+                };
+                img.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeLogo() {
+            overlayLogoImage = null;
+            document.getElementById('logo-upload').value = '';
+            document.getElementById('btn-remove-logo').classList.add('hidden');
+            document.getElementById('logo-settings-panel').classList.add('hidden');
+            document.getElementById('logo-filename-preview').classList.add('hidden');
+            updateQR();
+            showToast('Logo Removed');
+        }
+
+        function getPayloadString() {
+            switch (currentPayloadType) {
+                case 'url':
+                    return document.getElementById('input-url').value || 'https://simpleqr.app';
+                case 'text':
+                    return document.getElementById('input-text').value || 'SimpleQR';
+                case 'email':
+                    const to = document.getElementById('email-to').value;
+                    const sub = encodeURIComponent(document.getElementById('email-sub').value);
+                    const body = encodeURIComponent(document.getElementById('email-body').value);
+                    return `mailto:${to}?subject=${sub}&body=${body}`;
+                case 'phone':
+                    const telNum = document.getElementById('input-phone').value;
+                    return `tel:${telNum}`;
+                case 'sms':
+                    const phone = document.getElementById('sms-phone').value;
+                    const txt = encodeURIComponent(document.getElementById('sms-body').value);
+                    return `smsto:${phone}:${txt}`;
+                case 'wifi':
+                    const ssid = document.getElementById('wifi-ssid').value;
+                    const pass = document.getElementById('wifi-pass').value;
+                    const auth = document.getElementById('wifi-auth').value;
+                    const hid = document.getElementById('wifi-hidden').checked;
+                    return `WIFI:S:${ssid};T:${auth};P:${pass};H:${hid ? 'true' : 'false'};;`;
+                default:
+                    return 'https://simpleqr.app';
+            }
+        }
+
+        function isFinderPattern(r, c, moduleCount) {
+            if (r < 7 && c < 7) return true;
+            if (r < 7 && c >= moduleCount - 7) return true;
+            if (r >= moduleCount - 7 && c < 7) return true;
+            return false;
+        }
+
+        function drawFinderEye(ctx, x, y, size, eyeStyle, fgColor, bgColor) {
+            ctx.fillStyle = fgColor;
+            
+            if (eyeStyle === 'circle') {
+                ctx.beginPath();
+                ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = bgColor;
+                ctx.beginPath();
+                ctx.arc(x + size / 2, y + size / 2, size * (5 / 7) / 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = fgColor;
+                ctx.beginPath();
+                ctx.arc(x + size / 2, y + size / 2, size * (3 / 7) / 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (eyeStyle === 'rounded') {
+                const rOuter = size * 0.25;
+                const rInner = size * 0.2;
+                const rCenter = size * 0.15;
+
+                drawRoundedRect(ctx, x, y, size, size, rOuter, fgColor);
+                const p1 = size * (1 / 7);
+                drawRoundedRect(ctx, x + p1, y + p1, size * (5 / 7), size * (5 / 7), rInner, bgColor);
+                const p2 = size * (2 / 7);
+                drawRoundedRect(ctx, x + p2, y + p2, size * (3 / 7), size * (3 / 7), rCenter, fgColor);
+            } else {
+                ctx.fillRect(x, y, size, size);
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(x + (size / 7), y + (size / 7), size * (5 / 7), size * (5 / 7));
+                ctx.fillStyle = fgColor;
+                ctx.fillRect(x + (size * 2 / 7), y + (size * 2 / 7), size * (3 / 7), size * (3 / 7));
+            }
+        }
+
+        function drawRoundedRect(ctx, x, y, width, height, radius, fillStyle) {
+            ctx.fillStyle = fillStyle;
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.arcTo(x + width, y, x + width, y + height, radius);
+            ctx.arcTo(x + width, y + height, x, y + height, radius);
+            ctx.arcTo(x, y + height, x, y, radius);
+            ctx.arcTo(x, y, x + width, y, radius);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function updateQR() {
+            const canvas = document.getElementById('qr-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const payload = getPayloadString();
+            const dotStyle = document.getElementById('opt-dot-style').value;
+            const eyeStyle = document.getElementById('opt-eye-style').value;
+
+            // Use High Error Correction if overlay logo exists, else Medium
+            const ecl = overlayLogoImage ? 'H' : 'M';
+
+            let qrcodeObj;
+            try {
+                qrcodeObj = qrcode(0, ecl);
+                qrcodeObj.addData(payload);
+                qrcodeObj.make();
+            } catch (err) {
+                console.warn('QR render warning:', err);
+                return;
+            }
+
+            const moduleCount = qrcodeObj.getModuleCount();
+            const canvasSize = selectedScale;
+            
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+
+            const fgColor = document.getElementById('opt-fg-color').value;
+            const isTransparent = document.getElementById('opt-bg-transparent').checked;
+            const bgColor = isTransparent ? 'transparent' : document.getElementById('opt-bg-color').value;
+
+            document.getElementById('opt-fg-hex').value = fgColor.toUpperCase();
+            if (!isTransparent) {
+                document.getElementById('opt-bg-hex').value = bgColor.toUpperCase();
+            }
+
+            // Fill Background
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+            if (!isTransparent) {
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvasSize, canvasSize);
+            }
+
+            const cellSize = canvasSize / moduleCount;
+
+            // Render Matrix Modules
+            ctx.fillStyle = fgColor;
+            for (let r = 0; r < moduleCount; r++) {
+                for (let c = 0; c < moduleCount; c++) {
+                    if (qrcodeObj.isDark(r, c)) {
+                        if (!isFinderPattern(r, c, moduleCount)) {
+                            const x = c * cellSize;
+                            const y = r * cellSize;
+
+                            if (dotStyle === 'dots') {
+                                ctx.beginPath();
+                                ctx.arc(x + cellSize / 2, y + cellSize / 2, cellSize * 0.42, 0, Math.PI * 2);
+                                ctx.fill();
+                            } else if (dotStyle === 'round') {
+                                drawRoundedRect(ctx, x + 0.2, y + 0.2, cellSize - 0.4, cellSize - 0.4, cellSize * 0.35, fgColor);
+                            } else {
+                                ctx.fillRect(x, y, cellSize + 0.4, cellSize + 0.4);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Render Corner Eyes
+            const eyeSize = cellSize * 7;
+            const eyeBgColor = isTransparent ? '#ffffff' : bgColor;
+
+            drawFinderEye(ctx, 0, 0, eyeSize, eyeStyle, fgColor, eyeBgColor);
+            drawFinderEye(ctx, (moduleCount - 7) * cellSize, 0, eyeSize, eyeStyle, fgColor, eyeBgColor);
+            drawFinderEye(ctx, 0, (moduleCount - 7) * cellSize, eyeSize, eyeStyle, fgColor, eyeBgColor);
+
+            // Render Overlay Logo
+            if (overlayLogoImage) {
+                const logoPercent = parseInt(document.getElementById('opt-logo-size').value) / 100;
+                const logoSize = canvasSize * logoPercent;
+                const logoPos = (canvasSize - logoSize) / 2;
+                const bgType = document.getElementById('opt-logo-bg').value;
+                const fillBg = isTransparent ? '#ffffff' : bgColor;
+
+                if (bgType === 'white-circle') {
+                    ctx.fillStyle = fillBg;
+                    ctx.beginPath();
+                    ctx.arc(canvasSize / 2, canvasSize / 2, (logoSize / 2) + (canvasSize * 0.02), 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (bgType === 'white-rect') {
+                    const pad = canvasSize * 0.02;
+                    drawRoundedRect(ctx, logoPos - pad, logoPos - pad, logoSize + (pad * 2), logoSize + (pad * 2), canvasSize * 0.02, fillBg);
+                }
+
+                ctx.drawImage(overlayLogoImage, logoPos, logoPos, logoSize, logoSize);
+            }
+
+            saveToHistory(payload);
+        }
+
+        let historyDebounce = null;
+        function saveToHistory(payload) {
+            clearTimeout(historyDebounce);
+            historyDebounce = setTimeout(() => {
+                if (!payload) return;
+                if (qrHistory.length > 0 && qrHistory[0].payload === payload) return;
+
+                qrHistory.unshift({
+                    id: Date.now(),
+                    type: currentPayloadType,
+                    payload: payload,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                });
+
+                if (qrHistory.length > 10) qrHistory.pop();
+                localStorage.setItem('simple_qr_history_v2', JSON.stringify(qrHistory));
+                renderHistoryUI();
+            }, 1000);
+        }
+
+        function renderHistoryUI() {
+            const container = document.getElementById('history-container');
+            if (!container) return;
+            if (qrHistory.length === 0) {
+                container.innerHTML = `<p class="text-xs text-center text-sqr-sky font-semibold py-3">No history logs yet.</p>`;
+                return;
+            }
+
+            container.innerHTML = qrHistory.map(item => `
+                <div class="p-2 rounded bg-sqr-lightcyan border border-sqr-softblue flex items-center justify-between text-xs font-semibold">
+                    <div class="overflow-hidden mr-2">
+                        <span class="text-[9px] uppercase font-bold text-sqr-sky block">${item.type} (${item.time})</span>
+                        <p class="truncate text-sqr-darkblue font-mono">${escapeHtml(item.payload)}</p>
+                    </div>
+                    <button onclick="copyText('${escapeJs(item.payload)}')" class="matte-btn px-2 py-0.5 text-[10px] shrink-0">Copy</button>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            qrHistory = [];
+            localStorage.removeItem('simple_qr_history_v2');
+            renderHistoryUI();
+            showToast('History Cleared');
+        }
+
+        function downloadQR(format) {
+            const canvas = document.getElementById('qr-canvas');
+            const link = document.createElement('a');
+            link.download = `SimpleQR_${selectedScale}px_${Date.now()}.${format}`;
+            link.href = canvas.toDataURL(`image/${format === 'jpeg' ? 'jpeg' : 'png'}`, 0.95);
+            link.click();
+            showToast(`Downloaded PNG (${selectedScale}px)`);
+        }
+
+        function downloadSVG() {
+            const payload = getPayloadString();
+            const qrcodeObj = qrcode(0, 'H');
+            qrcodeObj.addData(payload);
+            qrcodeObj.make();
+
+            const moduleCount = qrcodeObj.getModuleCount();
+            const fgColor = document.getElementById('opt-fg-color').value;
+            const isTransparent = document.getElementById('opt-bg-transparent').checked;
+            const bgColor = isTransparent ? 'transparent' : document.getElementById('opt-bg-color').value;
+
+            let svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${moduleCount} ${moduleCount}" width="${selectedScale}" height="${selectedScale}">`;
+            if (!isTransparent) {
+                svgString += `<rect width="100%" height="100%" fill="${bgColor}"/>`;
+            }
+
+            for (let r = 0; r < moduleCount; r++) {
+                for (let c = 0; c < moduleCount; c++) {
+                    if (qrcodeObj.isDark(r, c)) {
+                        svgString += `<rect x="${c}" y="${r}" width="1" height="1" fill="${fgColor}"/>`;
+                    }
+                }
+            }
+            svgString += `</svg>`;
+
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `SimpleQR_${Date.now()}.svg`;
+            link.href = url;
+            link.click();
+            showToast('Exported SVG');
+        }
+
+        function copyQRToClipboard() {
+            const canvas = document.getElementById('qr-canvas');
+            canvas.toBlob(blob => {
+                if (!blob) return;
+                try {
+                    const item = new ClipboardItem({ 'image/png': blob });
+                    navigator.clipboard.write([item]).then(() => {
+                        showToast('QR Copied to Clipboard!');
+                    });
+                } catch (err) {
+                    showToast('Clipboard copy restricted in this browser.');
+                }
+            });
+        }
+
+        /* CAMERA SCANNER LOGIC */
+        function startWebcamScan() {
+            document.getElementById('scanner-placeholder').classList.add('hidden');
+            if (html5QrScanner) html5QrScanner.clear();
+
+            html5QrScanner = new Html5Qrcode("scanner-reader");
+            html5QrScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                (decodedText) => {
+                    handleScanResult(decodedText);
+                    html5QrScanner.stop();
+                },
+                (errorMessage) => {}
+            ).catch(err => {
+                showToast('Camera Permission Error');
+            });
+        }
+
+        function scanImageFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const html5QrCode = new Html5Qrcode("scanner-reader");
+            html5QrCode.scanFile(file, true)
+                .then(decodedText => {
+                    handleScanResult(decodedText);
+                })
+                .catch(err => {
+                    showToast('Could not decode QR file');
+                });
+        }
+
+        function handleScanResult(text) {
+            document.getElementById('scanner-result-box').classList.remove('hidden');
+            document.getElementById('scanner-result-text').innerText = text;
+
+            const openUrlBtn = document.getElementById('scanner-open-url');
+            if (text.startsWith('http://') || text.startsWith('https://')) {
+                openUrlBtn.href = text;
+                openUrlBtn.classList.remove('hidden');
+            } else {
+                openUrlBtn.classList.add('hidden');
+            }
+            showToast('QR Decoded Successfully!');
+        }
+
+        function copyScanResult() {
+            const text = document.getElementById('scanner-result-text').innerText;
+            copyText(text);
+        }
+
+        function openPrintModal() {
+            const canvas = document.getElementById('qr-canvas');
+            document.getElementById('print-qr-img').src = canvas.toDataURL('image/png');
+            document.getElementById('print-qr-payload').innerText = getPayloadString();
+            document.getElementById('print-modal').classList.remove('hidden');
+        }
+
+        function closePrintModal() {
+            document.getElementById('print-modal').classList.add('hidden');
+        }
+
+        function copyText(str) {
+            const ta = document.createElement('textarea');
+            ta.value = str;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('Copied to Clipboard!');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('sqr-toast');
+            document.getElementById('toast-text').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function escapeJs(str) {
+            return str.replace(/'/g, "\\'").replace(/\n/g, " ");
+        }
+    </script>
+</body>
+</html>
